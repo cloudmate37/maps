@@ -37,6 +37,11 @@ function useText(text, name) {
   }
   if (!parsed.records.length) throw new Error('지도에 연결할 수 있는 서울 지역 행이 없습니다.');
   state.data = parsed; state.name = name;
+  const hasGu = parsed.records.some(r => r.code.length === 5);
+  const hasDong = parsed.records.some(r => r.code.length === 8);
+  $('level').value = hasGu ? 'gu' : (hasDong ? 'dong' : 'gu');
+  $('gu-filter').value = 'all';
+  $('year').replaceChildren(); $('metric').replaceChildren();
   $('source-name').textContent = name;
   $('status').className = '';
   $('status').textContent = `${parsed.records.length.toLocaleString()}개 값을 읽었습니다. ${parsed.format === 'wide' ? `자치구별 다중 지표 형식${parsed.inferredYear ? ` · 연도 ${parsed.inferredYear} 추정` : ' · 연도 미상'}` : (parsed.header ? '제목 있는 4열' : '제목 없는 4열')} 형식으로 해석했습니다.`;
@@ -88,7 +93,7 @@ function refreshControls() {
   const oldYear = $('year').value, oldMetric = $('metric').value;
   const years = [...new Set(records.map(r => r.year))].sort().reverse();
   fillSelect($('year'), years.map(y => [y, y]), oldYear);
-  const metrics = [...new Set(records.filter(r => r.year === $('year').value).map(r => r.metric))].sort();
+  const metrics = [...new Set(records.filter(r => r.year === $('year').value).map(r => r.metric))];
   fillSelect($('metric'), metrics.map(m => [m, state.names[m] ? `${state.names[m]} (${m})` : m]), oldMetric);
   $('level').disabled = !records.length;
   $('download').disabled = !records.length;
