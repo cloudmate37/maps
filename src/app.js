@@ -1,5 +1,6 @@
 import { decodeCSV, fetchDriveCSV, readData } from './data.js';
 import { renderMap } from './viewer.js';
+import { createPNG } from './png.js';
 
 const $ = id => document.getElementById(id);
 const state = { data: null, name: '', gu: null, dong: null, names: null, map: null };
@@ -97,6 +98,7 @@ function refreshControls() {
   fillSelect($('metric'), metrics.map(m => [m, state.names[m] ? `${state.names[m]} (${m})` : m]), oldMetric);
   $('level').disabled = !records.length;
   $('download').disabled = !records.length;
+  $('download-png').disabled = !records.length;
   updateFilter();
 }
 
@@ -132,6 +134,24 @@ function updateMap() {
     $('status').textContent = '선택한 연도·지표·지역 단위에 해당하는 CSV 값이 없습니다. 표시 단위를 바꿔 보세요.';
   }
   $('download').disabled = !state.data || selected.matched === 0;
+  $('download-png').disabled = !state.data || selected.matched === 0;
+}
+
+async function downloadPNG() {
+  const selected = selection();
+  if (!selected.matched) return;
+  const button = $('download-png');
+  button.disabled = true;
+  try {
+    const blob = await createPNG({ ...selected, source: state.name });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `서울_${selected.level === 'gu' ? '자치구' : '행정동'}_${selected.metric}_${selected.year}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) { showError(`PNG 생성에 실패했습니다: ${error.message}`); }
+  finally { button.disabled = false; }
 }
 
 async function downloadHTML() {
@@ -143,7 +163,7 @@ async function downloadHTML() {
     ]);
     const payload = { ...selected, source: state.name };
     const safeTitle = selected.title.replace(/[<>"'&]/g, '');
-    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle} | 서울 통계 지도</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoTQjUod+lmhkOBA=" crossorigin=""><style>${css}</style></head><body><header class="topbar"><div class="brand"><span class="brand-mark">서울</span><span>통계 지도</span></div><span class="top-note">2025년 6월 행정동 경계</span></header><main><section class="map-panel"><div class="map-heading"><div><span class="eyebrow">SEOUL STATISTICS MAP</span><h2 id="map-title"></h2><p id="map-subtitle"></p></div></div><div id="map"></div><div id="legend" class="legend"></div><div class="map-foot" id="source"></div></section></main><script id="payload" type="application/json">${escapeJSON(payload)}</script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><script>${viewer.replace(/^export /gm, '')}\nconst data=JSON.parse(document.getElementById('payload').textContent);document.getElementById('map-title').textContent=data.title;document.getElementById('map-subtitle').textContent=data.subtitle;document.getElementById('source').textContent='경계: 국가데이터처 SGIS, 2025-06-30 · 배경지도: © OpenStreetMap contributors · 통계: '+data.source;renderMap({element:document.getElementById('map'),legend:document.getElementById('legend'),...data});<\/script></body></html>`;
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle} | 서울 통계 지도</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoTQjUod+lmhkOBA=" crossorigin=""><style>${css}</style></head><body><header class="topbar"><div class="brand"><span class="brand-mark">서울</span><span>통계 지도</span></div><span class="top-note">2025년 6월 행정동 경계</span></header><main><section class="map-panel"><div class="map-heading"><div><span class="eyebrow">SEOUL STATISTICS MAP</span><h2 id="map-title"></h2><p id="map-subtitle"></p></div></div><div id="map"></div><div id="legend" class="legend"></div><div class="map-foot" id="source"></div></section></main><script id="payload" type="application/json">${escapeJSON(payload)}</script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><script>${viewer.replace(/^export /gm, '')}\nconst data=JSON.parse(document.getElementById('payload').textContent);document.getElementById('map-title').textContent=data.title;document.getElementById('map-subtitle').textContent=data.subtitle;document.getElementById('source').textContent='경계: 국가데이터처 SGIS, 2025-06-30 · 통계: '+data.source;renderMap({element:document.getElementById('map'),legend:document.getElementById('legend'),...data});<\/script></body></html>`;
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = `서울_${selected.level === 'gu' ? '자치구' : '행정동'}_${selected.metric}_${selected.year}.html`;
     a.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -174,4 +194,5 @@ $('metric').addEventListener('change', updateMap);
 $('level').addEventListener('change', () => { updateFilter(); updateMap(); });
 $('gu-filter').addEventListener('change', updateMap);
 $('download').addEventListener('click', downloadHTML);
+$('download-png').addEventListener('click', downloadPNG);
 init();

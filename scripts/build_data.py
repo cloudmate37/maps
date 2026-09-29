@@ -25,9 +25,11 @@ def rounded(value):
 def feature(code, name, gu_code, gu_name, geometry):
     shape = mapping(geometry)
     shape["coordinates"] = rounded(shape["coordinates"])
+    label_point = geometry.representative_point()
     return {
         "type": "Feature",
-        "properties": {"code": str(code), "name": str(name), "guCode": str(gu_code), "guName": str(gu_name)},
+        "properties": {"code": str(code), "name": str(name), "guCode": str(gu_code),
+                       "guName": str(gu_name), "labelPoint": rounded((label_point.x, label_point.y))},
         "geometry": shape,
     }
 

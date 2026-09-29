@@ -1,19 +1,23 @@
 export const palette = ['#d8ecf5', '#a5d3e5', '#6bb4d2', '#348eae', '#12627f'];
 
-export function renderMap({ element, legend, geojson, values, title, subtitle, unit = '' }) {
-  if (!globalThis.L) throw new Error('지도 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+export function colorScale(values, unit = '') {
   const valid = Object.values(values).filter(x => typeof x === 'number' && Number.isFinite(x));
   const min = valid.length ? Math.min(...valid) : 0;
   const max = valid.length ? Math.max(...valid) : 0;
   const span = max - min;
-  const color = value => value == null ? '#c9d0d3' : palette[span === 0 ? 2 : Math.min(4, Math.floor((value - min) / span * 5))];
-  const number = value => value == null ? '자료 없음' : `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 3 }).format(value)}${unit}`;
+  return {
+    valid, min, max, span,
+    color: value => value == null ? '#c9d0d3' : palette[span === 0 ? 2 : Math.min(4, Math.floor((value - min) / span * 5))],
+    number: value => value == null ? '자료 없음' : `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 3 }).format(value)}${unit}`
+  };
+}
+
+export function renderMap({ element, legend, geojson, values, title, subtitle, unit = '' }) {
+  if (!globalThis.L) throw new Error('지도 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+  const { valid, min, max, span, color, number } = colorScale(values, unit);
   if (element._map) { element._map.remove(); element._map = null; }
   const map = L.map(element, { scrollWheelZoom: true, zoomControl: true });
   element._map = map;
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
   const layer = L.geoJSON(geojson, {
     style: f => ({ color: '#36505b', weight: 0.8, opacity: 0.8, fillColor: color(values[f.properties.code]), fillOpacity: 0.83 }),
     onEachFeature: (f, polygon) => {
