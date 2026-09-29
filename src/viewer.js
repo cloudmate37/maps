@@ -12,20 +12,35 @@ export function colorScale(values, unit = '') {
   };
 }
 
-export function renderMap({ element, legend, geojson, values, title, subtitle, unit = '' }) {
-  if (!globalThis.L) throw new Error('지도 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+export function renderMap({ element, legend, geojson, values, attributes = {}, title, subtitle, year, metric, level, unit = '' }) {
+  if (!globalThis.L) throw new Error('지도 라이브러리를 불러오지 못했습니다. 파일을 다시 열어 주세요.');
   const { valid, min, max, span, color, number } = colorScale(values, unit);
   if (element._map) { element._map.remove(); element._map = null; }
   const map = L.map(element, { scrollWheelZoom: true, zoomControl: true });
   element._map = map;
+  const regionInfo = feature => {
+    const info = document.createElement('div'); info.className = 'region-info';
+    const heading = document.createElement('strong'); heading.textContent = feature.properties.name;
+    const context = document.createElement('div'); context.className = 'region-context';
+    context.textContent = `${level === 'dong' ? `${feature.properties.guName} · ` : ''}${year === '연도 미상' ? year : `${year}년`} 속성`;
+    info.append(heading, context);
+    const records = [...(attributes[feature.properties.code] || [])];
+    records.sort((a, b) => Number(b.metric === metric) - Number(a.metric === metric));
+    if (!records.length) records.push({ metric, label: metric || '선택 지표', value: values[feature.properties.code] ?? null });
+    for (const record of records) {
+      const row = document.createElement('div');
+      row.className = `region-row${record.metric === metric ? ' selected' : ''}`;
+      const label = document.createElement('span'); label.textContent = record.label;
+      const value = document.createElement('b'); value.textContent = number(record.value);
+      row.append(label, value); info.append(row);
+    }
+    return info;
+  };
   const layer = L.geoJSON(geojson, {
     style: f => ({ color: '#36505b', weight: 0.8, opacity: 0.8, fillColor: color(values[f.properties.code]), fillOpacity: 0.83 }),
     onEachFeature: (f, polygon) => {
-      const popup = document.createElement('div');
-      const name = document.createElement('strong'); name.textContent = f.properties.name;
-      const detail = document.createElement('div'); detail.textContent = number(values[f.properties.code]);
-      popup.append(name, detail); polygon.bindPopup(popup);
-      polygon.bindTooltip(`${f.properties.name}: ${number(values[f.properties.code])}`);
+      polygon.bindPopup(regionInfo(f));
+      polygon.bindTooltip(regionInfo(f), { sticky: true, opacity: 1, className: 'region-tooltip' });
       polygon.on('mouseover', () => polygon.setStyle({ weight: 2.2, color: '#083c52' }));
       polygon.on('mouseout', () => layer.resetStyle(polygon));
     }

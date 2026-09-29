@@ -67,6 +67,15 @@ export function readData(text, knownCodes, guNames = {}) {
   return { columns, header, records, invalid, unmatched: [...unmatched].sort(), duplicates, excluded, format: 'long' };
 }
 
+export function regionAttributes(records, year, featureCodes, names = {}) {
+  const attributes = {};
+  for (const row of records) {
+    if (row.year !== year || !featureCodes.has(row.code)) continue;
+    (attributes[row.code] ||= []).push({ metric: row.metric, label: names[row.metric] || row.metric, value: row.value });
+  }
+  return attributes;
+}
+
 function readWide(lines, guNames) {
   const columns = lines[0].map(x => x.trim());
   const yearMatch = columns.join(' ').match(/(?:20)?(\d{2})\s*년/);
