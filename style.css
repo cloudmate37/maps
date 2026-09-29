@@ -3,3 +3,4 @@
 .region-tooltip.leaflet-tooltip{padding:0;border:1px solid #b8d4df;border-radius:9px;box-shadow:0 8px 24px rgba(13,47,63,.2);white-space:normal}.region-info{min-width:220px;max-width:320px;max-height:min(55vh,420px);overflow:auto;padding:11px 13px;color:#183846;font:14px/1.45 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}.region-info>strong{display:block;font-size:16px}.region-context{color:#6a808b;font-size:12px;margin:2px 0 8px}.region-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:14px;border-top:1px solid #e7eff2;padding:5px 0}.region-row span{overflow-wrap:anywhere}.region-row b{text-align:right;white-space:nowrap}.region-row.selected{color:#086f92;background:#e9f7fb;font-weight:700;margin:0 -7px;padding:6px 7px;border-radius:4px}
 
 #map path.leaflet-interactive{pointer-events:visiblePainted;cursor:pointer}
+.palette-control{grid-column:1/-1}

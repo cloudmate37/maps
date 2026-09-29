@@ -1,20 +1,28 @@
-export const palette = ['#d8ecf5', '#a5d3e5', '#6bb4d2', '#348eae', '#12627f'];
+export const palettes = {
+  blue: ['#d8ecf5', '#a5d3e5', '#6bb4d2', '#348eae', '#12627f'],
+  viridis: ['#440154', '#3b528b', '#21918c', '#5ec962', '#fde725'],
+  warm: ['#fff5eb', '#fdcba1', '#fc8d59', '#e34a33', '#b30000'],
+  purple: ['#f2f0f7', '#cbc9e2', '#9e9ac8', '#756bb1', '#54278f']
+};
+export const missingColor = '#c9d0d3';
+export const hasMissingData = (features, values) => features.some(f => !Number.isFinite(values[f.properties.code]));
 
-export function colorScale(values, unit = '') {
+export function colorScale(values, unit = '', paletteName = 'blue') {
+  const palette = palettes[paletteName] || palettes.blue;
   const valid = Object.values(values).filter(x => typeof x === 'number' && Number.isFinite(x));
   const min = valid.length ? Math.min(...valid) : 0;
   const max = valid.length ? Math.max(...valid) : 0;
   const span = max - min;
   return {
-    valid, min, max, span,
-    color: value => value == null ? '#c9d0d3' : palette[span === 0 ? 2 : Math.min(4, Math.floor((value - min) / span * 5))],
-    number: value => value == null ? '자료 없음' : `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 3 }).format(value)}${unit}`
+    valid, min, max, span, palette,
+    color: value => !Number.isFinite(value) ? missingColor : palette[span === 0 ? 2 : Math.min(4, Math.floor((value - min) / span * 5))],
+    number: value => !Number.isFinite(value) ? '자료 없음' : `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 3 }).format(value)}${unit}`
   };
 }
 
-export function renderMap({ element, legend, geojson, values, attributes = {}, title, subtitle, year, metric, level, unit = '' }) {
+export function renderMap({ element, legend, geojson, values, attributes = {}, title, subtitle, year, metric, level, paletteName = 'blue', showMissing = true, unit = '' }) {
   if (!globalThis.L) throw new Error('지도 라이브러리를 불러오지 못했습니다. 파일을 다시 열어 주세요.');
-  const { valid, min, max, span, color, number } = colorScale(values, unit);
+  const { valid, min, max, span, color, number, palette } = colorScale(values, unit, paletteName);
   if (element._map) { element._map.remove(); element._map = null; }
   const map = L.map(element, { scrollWheelZoom: true, zoomControl: true });
   element._map = map;
@@ -60,10 +68,13 @@ export function renderMap({ element, legend, geojson, values, attributes = {}, t
       row.append(swatch, label); items.append(row);
     });
   }
-  const empty = document.createElement('div');
-  const swatch = document.createElement('i'); swatch.style.background = '#c9d0d3';
-  const label = document.createElement('span'); label.textContent = '자료 없음';
-  empty.append(swatch, label); items.append(empty); legend.append(items);
+  if (showMissing && hasMissingData(geojson.features, values)) {
+    const empty = document.createElement('div');
+    const swatch = document.createElement('i'); swatch.style.background = missingColor;
+    const label = document.createElement('span'); label.textContent = '자료 없음';
+    empty.append(swatch, label); items.append(empty);
+  }
+  legend.append(items);
   setTimeout(() => map.invalidateSize(), 0);
   return map;
 }

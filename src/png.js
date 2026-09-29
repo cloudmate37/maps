@@ -1,4 +1,4 @@
-import { colorScale, palette } from './viewer.js';
+import { colorScale, hasMissingData, missingColor } from './viewer.js?v=palette-2';
 
 const WIDTH = 1800;
 const HEIGHT = 1350;
@@ -53,14 +53,14 @@ function drawFeature(ctx, feature, toPixel, fill) {
   }
 }
 
-export async function createPNG({ geojson, values, title, subtitle, source = '입력 CSV', level }) {
+export async function createPNG({ geojson, values, title, subtitle, source = '입력 CSV', level, paletteName = 'blue' }) {
   const features = geojson.features;
   const toPixel = mapTransform(features);
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH; canvas.height = HEIGHT;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('브라우저에서 PNG 캔버스를 만들지 못했습니다.');
-  const scale = colorScale(values);
+  const scale = colorScale(values, '', paletteName);
 
   // Leave all pixels outside the boundaries transparent.
   ctx.fillStyle = '#142b38';
@@ -94,11 +94,11 @@ export async function createPNG({ geojson, values, title, subtitle, source = '�
   ctx.fillStyle = '#142b38';
   ctx.fillText('범례', 70, legendY);
   const buckets = scale.valid.length ? (scale.span === 0 ? [2] : [0, 1, 2, 3, 4]) : [];
-  const slots = [...buckets, 'missing'];
+  const slots = hasMissingData(features, values) ? [...buckets, 'missing'] : buckets;
   const slotWidth = (WIDTH - 140) / slots.length;
   slots.forEach((bucket, index) => {
     const x = 70 + index * slotWidth;
-    ctx.fillStyle = bucket === 'missing' ? '#c9d0d3' : palette[bucket];
+    ctx.fillStyle = bucket === 'missing' ? missingColor : scale.palette[bucket];
     ctx.fillRect(x, legendY + 20, 32, 24);
     ctx.fillStyle = '#405b68';
     ctx.font = '19px system-ui, sans-serif';

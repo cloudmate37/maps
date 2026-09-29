@@ -1,6 +1,6 @@
-import { decodeCSV, fetchDriveCSV, readData, regionAttributes } from './data.js?v=hover-2';
-import { renderMap } from './viewer.js?v=hover-2';
-import { createPNG } from './png.js?v=hover-2';
+import { decodeCSV, fetchDriveCSV, readData, regionAttributes } from './data.js?v=palette-2';
+import { renderMap } from './viewer.js?v=palette-2';
+import { createPNG } from './png.js?v=palette-2';
 
 const $ = id => document.getElementById(id);
 const state = { data: null, name: '', gu: null, dong: null, names: null, map: null };
@@ -111,6 +111,7 @@ function selection() {
   const level = $('level').value;
   const year = $('year').value;
   const metric = $('metric').value;
+  const paletteName = $('palette').value;
   const guFilter = $('gu-filter').value;
   const collection = level === 'gu' ? state.gu : state.dong;
   const features = collection.features.filter(f => level === 'gu' || guFilter === 'all' || f.properties.guCode === guFilter);
@@ -121,7 +122,7 @@ function selection() {
   const matched = features.filter(f => Object.hasOwn(values, f.properties.code)).length;
   const title = state.names?.[metric] ? `${state.names[metric]} · ${year}` : (metric ? `${metric} · ${year}` : '서울 통계 지도');
   const subtitle = `${level === 'gu' ? '자치구' : '행정동'} ${features.length}개 · 값이 있는 지역 ${features.filter(f => values[f.properties.code] != null).length}개 · 경계 2025-06-30`;
-  return { geojson: { type: 'FeatureCollection', features }, values, attributes, title, subtitle, matched, total: features.length, year, metric, level };
+  return { geojson: { type: 'FeatureCollection', features }, values, attributes, title, subtitle, matched, total: features.length, year, metric, level, paletteName };
 }
 
 function updateMap() {
@@ -130,7 +131,7 @@ function updateMap() {
   $('map-title').textContent = selected.title;
   $('map-subtitle').textContent = state.data ? selected.subtitle : 'CSV를 불러오면 지도에 값이 표시됩니다.';
   $('match-count').textContent = state.data ? `${selected.matched} / ${selected.total} 지역 매칭` : '준비됨';
-  try { state.map = renderMap({ element: $('map'), legend: $('legend'), ...selected }); }
+  try { state.map = renderMap({ element: $('map'), legend: $('legend'), ...selected, showMissing: Boolean(state.data) }); }
   catch (error) { showError(error.message); }
   if (state.data && selected.matched === 0) {
     $('status').textContent = '선택한 연도·지표·지역 단위에 해당하는 CSV 값이 없습니다. 표시 단위를 바꿔 보세요.';
@@ -161,8 +162,8 @@ async function downloadHTML() {
   if (!selected.matched) return;
   try {
     const [css, viewer, leafletCSS, leafletJS] = await Promise.all([
-      fetch('./style.css?v=hover-2').then(r => r.text()),
-      fetch('./src/viewer.js?v=hover-2').then(r => r.text()),
+      fetch('./style.css?v=palette-2').then(r => r.text()),
+      fetch('./src/viewer.js?v=palette-2').then(r => r.text()),
       fetch('./vendor/leaflet/leaflet.css').then(r => r.text()),
       fetch('./vendor/leaflet/leaflet.js').then(r => r.text())
     ]);
@@ -190,7 +191,7 @@ $('csv-file').addEventListener('change', async event => {
 });
 $('sample').addEventListener('click', async () => {
   setBusy(true);
-  try { const response = await fetch('./data/sample-population.csv?v=hover-2'); if (!response.ok) throw new Error('예시 파일을 읽을 수 없습니다.'); useText(await response.text(), '국가데이터처 SGIS · 2024년 총인구·평균나이 예시'); }
+  try { const response = await fetch('./data/sample-population.csv?v=palette-2'); if (!response.ok) throw new Error('예시 파일을 읽을 수 없습니다.'); useText(await response.text(), '국가데이터처 SGIS · 2024년 총인구·평균나이 예시'); }
   catch (error) { showError(error.message); }
   finally { setBusy(false); }
 });
@@ -198,6 +199,7 @@ $('year').addEventListener('change', () => { refreshControls(); updateMap(); });
 $('metric').addEventListener('change', updateMap);
 $('level').addEventListener('change', () => { updateFilter(); updateMap(); });
 $('gu-filter').addEventListener('change', updateMap);
+$('palette').addEventListener('change', updateMap);
 $('download').addEventListener('click', downloadHTML);
 $('download-png').addEventListener('click', downloadPNG);
 init();

@@ -6,7 +6,7 @@
   <meta name="description" content="서울 자치구와 행정동 통계 CSV를 지도로 만들고 HTML로 저장합니다.">
   <title>서울 통계 지도 만들기</title>
   <link rel="stylesheet" href="./vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="./style.css?v=hover-2">
+  <link rel="stylesheet" href="./style.css?v=palette-2">
 </head>
 <body>
   <header class="topbar"><div class="brand"><span class="brand-mark">서울</span><span>통계 지도 만들기</span></div><span class="top-note">2025년 6월 행정동 경계</span></header>
@@ -15,7 +15,7 @@
     <div class="workspace">
       <aside class="controls">
         <section class="card"><div class="step"><span>01</span><h2>CSV 불러오기</h2></div><p class="help">연도·지역코드·지표코드·값의 4열 CSV와 자치구명·여러 지표 열로 된 CSV를 지원합니다.</p><label for="drive-link">Google Drive 공유 링크</label><div class="input-row"><input id="drive-link" type="url" placeholder="https://drive.google.com/file/d/…/view"><button id="load-drive" type="button">불러오기</button></div><div class="divider">또는</div><label class="file-label" for="csv-file">내 컴퓨터의 CSV 선택</label><input id="csv-file" type="file" accept=".csv,text/csv"><button id="sample" type="button" class="text-button">예시 데이터로 체험</button><p id="source-name" class="source-name" aria-live="polite"></p></section>
-        <section class="card"><div class="step"><span>02</span><h2>지도 설정</h2></div><div class="form-grid"><div><label for="year">통계 연도</label><select id="year" disabled></select></div><div><label for="metric">지표</label><select id="metric" disabled></select></div><div><label for="level">표시 단위</label><select id="level" disabled><option value="gu">자치구</option><option value="dong">행정동</option></select></div><div><label for="gu-filter">자치구 필터</label><select id="gu-filter" disabled><option value="all">서울 전체</option></select></div></div><div class="export-row"><button id="download" type="button" disabled>HTML 다운로드</button><button id="download-png" type="button" disabled>PNG 다운로드</button></div></section>
+        <section class="card"><div class="step"><span>02</span><h2>지도 설정</h2></div><div class="form-grid"><div><label for="year">통계 연도</label><select id="year" disabled></select></div><div><label for="metric">지표</label><select id="metric" disabled></select></div><div><label for="level">표시 단위</label><select id="level" disabled><option value="gu">자치구</option><option value="dong">행정동</option></select></div><div><label for="gu-filter">자치구 필터</label><select id="gu-filter" disabled><option value="all">서울 전체</option></select></div><div class="palette-control"><label for="palette">색상표</label><select id="palette"><option value="blue">파랑</option><option value="viridis">비리디스</option><option value="warm">주황·빨강</option><option value="purple">보라</option></select></div></div><div class="export-row"><button id="download" type="button" disabled>HTML 다운로드</button><button id="download-png" type="button" disabled>PNG 다운로드</button></div></section>
         <section class="card info-card"><div class="step"><span>03</span><h2>데이터 확인</h2></div><div id="status" role="status" aria-live="polite">CSV를 불러오면 열과 표본 행, 매칭 결과가 여기에 표시됩니다.</div><div id="preview-table"></div><div id="issues"></div></section>
       </aside>
       <section class="map-panel"><div class="map-heading"><div><span class="eyebrow">MAP PREVIEW</span><h2 id="map-title">서울 통계 지도</h2><p id="map-subtitle">CSV를 불러오면 지도에 값이 표시됩니다.</p></div><span id="match-count" class="count-pill">준비됨</span></div><div id="map" aria-label="서울 지도"></div><div id="legend" class="legend"></div><div class="map-foot">경계: 국가데이터처 SGIS, 2025-06-30 · 통계: 입력 CSV</div></section>
@@ -24,6 +24,6 @@
   <footer>서울 통계 지도 만들기 · 행정동 경계 기준일과 통계 연도가 다를 수 있습니다.</footer>
   <script src="./vendor/leaflet/leaflet.js"></script>
   <script src="./config.js"></script>
-  <script type="module" src="./src/app.js?v=hover-2"></script>
+  <script type="module" src="./src/app.js?v=palette-2"></script>
 </body>
 </html>
