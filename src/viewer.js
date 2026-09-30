@@ -30,11 +30,13 @@ export function renderMap({ element, legend, geojson, values, attributes = {}, t
     const info = document.createElement('div'); info.className = 'region-info';
     const heading = document.createElement('strong'); heading.textContent = feature.properties.name;
     const context = document.createElement('div'); context.className = 'region-context';
-    context.textContent = `${level === 'dong' ? `${feature.properties.guName} · ` : ''}${year === '연도 미상' ? year : `${year}년`} 속성`;
+    context.textContent = `${level !== 'gu' ? `${feature.properties.guName} · ` : ''}${year ? (year === '연도 미상' ? year : `${year}년`) : '경계 정보'}`;
     info.append(heading, context);
     const records = [...(attributes[feature.properties.code] || [])];
     records.sort((a, b) => Number(b.metric === metric) - Number(a.metric === metric));
-    if (!records.length) records.push({ metric, label: metric || '선택 지표', value: values[feature.properties.code] ?? null });
+    const codeRow = document.createElement('div'); codeRow.className = 'region-context';
+    codeRow.textContent = `지역코드 ${feature.properties.code}`; info.append(codeRow);
+    if (!records.length && metric) records.push({ metric, label: metric, value: values[feature.properties.code] ?? null });
     for (const record of records) {
       const row = document.createElement('div');
       row.className = `region-row${record.metric === metric ? ' selected' : ''}`;

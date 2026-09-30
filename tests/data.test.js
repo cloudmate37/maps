@@ -5,6 +5,7 @@ import { parseCSV, readData, driveFile, regionAttributes } from '../src/data.js'
 
 const gu = JSON.parse(fs.readFileSync(new URL('../data/seoul-gu.geojson', import.meta.url)));
 const dong = JSON.parse(fs.readFileSync(new URL('../data/seoul-dong.geojson', import.meta.url)));
+const legal = JSON.parse(fs.readFileSync(new URL('../data/seoul-legal.geojson', import.meta.url)));
 const codes = new Set([...gu.features, ...dong.features].map(f => f.properties.code));
 const guNames = Object.fromEntries(gu.features.map(f => [f.properties.name, f.properties.code]));
 
@@ -56,4 +57,22 @@ test('hover attributes include all metrics for the selected year and region', ()
       { metric: 'to_in_002', label: '평균나이', value: 44.2 }
     ]
   });
+});
+
+test('legal boundaries map districts by name and accept 8 or 10 digit legal codes', () => {
+  assert.equal(legal.features.length, 466);
+  assert.equal(new Set(legal.features.map(f => f.properties.code)).size, 466);
+  const districts = new Map(gu.features.map(f => [f.properties.code, f.properties.name]));
+  const adminCodes = new Set(dong.features.map(f => f.properties.code));
+  for (const f of legal.features) {
+    assert.equal(districts.get(f.properties.guCode), f.properties.guName);
+    assert.equal(adminCodes.has(f.properties.code), false);
+  }
+  const legalCodes = new Set(legal.features.map(f => f.properties.code));
+  const [a, b] = legal.features.map(f => f.properties.code);
+  const result = readData(`연도,지역코드,지표코드,값\n2024,${a},count,12\n2024,${b}00,count,20`, legalCodes);
+  assert.equal(result.invalid.length, 0);
+  assert.deepEqual(result.records.map(r => r.code), [a, b]);
+  const duplicate = readData(`2024,${a},count,12\n2024,${a}00,count,20`, legalCodes);
+  assert.equal(duplicate.duplicates.length, 1);
 });

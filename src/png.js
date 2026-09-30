@@ -1,4 +1,4 @@
-import { colorScale, hasMissingData, missingColor } from './viewer.js?v=palette-2';
+import { colorScale, hasMissingData, missingColor } from './viewer.js?v=legal-1';
 
 const WIDTH = 1800;
 const HEIGHT = 1350;
@@ -53,7 +53,7 @@ function drawFeature(ctx, feature, toPixel, fill) {
   }
 }
 
-export async function createPNG({ geojson, values, title, subtitle, source = '입력 CSV', level, paletteName = 'blue' }) {
+export async function createPNG({ geojson, values, title, subtitle, source = '입력 CSV', level, paletteName = 'blue', showMissing = true, boundarySource = '국가데이터처 SGIS · 2025-06-30' }) {
   const features = geojson.features;
   const toPixel = mapTransform(features);
   const canvas = document.createElement('canvas');
@@ -94,7 +94,7 @@ export async function createPNG({ geojson, values, title, subtitle, source = '�
   ctx.fillStyle = '#142b38';
   ctx.fillText('범례', 70, legendY);
   const buckets = scale.valid.length ? (scale.span === 0 ? [2] : [0, 1, 2, 3, 4]) : [];
-  const slots = hasMissingData(features, values) ? [...buckets, 'missing'] : buckets;
+  const slots = showMissing && hasMissingData(features, values) ? [...buckets, 'missing'] : buckets;
   const slotWidth = (WIDTH - 140) / slots.length;
   slots.forEach((bucket, index) => {
     const x = 70 + index * slotWidth;
@@ -108,7 +108,7 @@ export async function createPNG({ geojson, values, title, subtitle, source = '�
   });
   ctx.font = '18px system-ui, sans-serif';
   ctx.fillStyle = '#657985';
-  ctx.fillText(`경계: 국가데이터처 SGIS (2025-06-30) · 통계: ${source}`, 70, HEIGHT - 50);
+  ctx.fillText(`경계: ${boundarySource} · 통계: ${source}`, 70, HEIGHT - 50);
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('PNG 파일을 생성하지 못했습니다.');

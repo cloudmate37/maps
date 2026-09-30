@@ -41,7 +41,8 @@ export function readData(text, knownCodes, guNames = {}) {
   lines.slice(header ? 1 : 0).forEach((raw, index) => {
     const line = index + (header ? 2 : 1);
     if (raw.length !== 4) { invalid.push(`${line}행: 4열이 아닙니다.`); return; }
-    const [year, code, metric, valueText] = raw.map(x => x.trim());
+    const [year, rawCode, metric, valueText] = raw.map(x => x.trim());
+    const code = /^\d{8}00$/.test(rawCode) ? rawCode.slice(0, 8) : rawCode;
     if (!/^\d{4}$/.test(year) || !/^(?:\d{2}|\d{5}|\d{8})$/.test(code) || !metric) {
       invalid.push(`${line}행: 연도·지역코드·지표코드를 확인하세요.`); return;
     }
